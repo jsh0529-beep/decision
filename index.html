@@ -4,6 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>결단 뚝심 신의 — 경북 상식 대결</title>
+
+<!-- ===== 공유 미리보기 (og 태그) =====
+     GitHub Pages 배포 후 og:url을 실제 주소로 바꾸세요.
+     og:image에는 책 표지 이미지를 저장소에 함께 올린 뒤 그 주소를 넣으면
+     카톡·Threads 공유 시 표지가 썸네일로 뜹니다. (권장 1200x630 또는 표지 원본) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="결단 뚝심 신의 — 경북 상식 대결">
+<meta property="og:description" content="열두 문제, 세 관문. 당신의 경북 내공에 낙관이 찍힙니다. 《이철우가 걸어온 길》 출간 기념 퀴즈.">
+<meta property="og:url" content="https://아이디.github.io/저장소명/">
+<meta property="og:image" content="https://아이디.github.io/저장소명/cover.jpg">
+<meta name="twitter:card" content="summary_large_image">
+
 <style>
   :root{
     --ink:#161412;        /* 먹색 */
@@ -165,6 +177,27 @@
     font-family:"Nanum Myeongjo",serif;font-size:40px;font-weight:900;color:var(--seal);
     transform:rotate(-5deg);margin-bottom:4px;
   }
+  .btn-share{
+    background:transparent;color:var(--paper);
+    border:1px solid var(--paper);
+    font-size:15px;letter-spacing:3px;
+    padding:14px 40px;border-radius:2px;
+    display:inline-flex;align-items:center;gap:10px;
+  }
+  .btn-share:hover{background:var(--paper);color:var(--ink);}
+
+  /* ===== 복사 완료 토스트 ===== */
+  .toast{
+    position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(12px);
+    background:var(--paper);color:var(--ink);
+    font-size:13.5px;font-weight:700;letter-spacing:.5px;
+    padding:11px 20px;border-radius:3px;
+    box-shadow:0 4px 18px rgba(0,0,0,.45);
+    opacity:0;pointer-events:none;z-index:99;
+    transition:opacity .25s ease, transform .25s ease;
+    white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
   /* ===== 구매 배너 ===== */
   .buy-banner{
@@ -238,11 +271,16 @@
       <p class="title-label">당신에게 찍힌 낙관</p>
       <p class="earned-title" id="earnedTitle">신의의 사람</p>
       <p class="score" id="scoreText"></p>
+      <button class="btn btn-share" onclick="shareResult()">
+        <span>결과 공유하기</span><span aria-hidden="true">⤴</span>
+      </button>
       <button class="btn btn-ghost" onclick="restart()">새 문제로 다시 풀기</button>
     </div>
   </section>
 
 </div>
+
+<div class="toast" id="toast">공유 문구가 복사됐습니다. 붙여넣기 하세요!</div>
 
 <!-- 구매 배너 (상시 노출) -->
 <div class="buy-banner">
@@ -472,6 +510,8 @@ function nextQuestion(){
 function finish(){
   $("progBar").style.width = "100%";
   const t = TITLES.find(t=>score >= t.min);
+  lastTitle = t.title;
+  lastScore = score;
   $("medalChar").textContent = t.char;
   $("earnedTitle").textContent = t.title;
   $("scoreText").innerHTML = `${ROUND.length}문제 중 <b>${score}문제</b> 정답<br>${t.msg}`;
@@ -480,6 +520,55 @@ function finish(){
 
 function restart(){
   show("scr-cover");
+}
+
+// ===== 결과 공유 =====
+let lastTitle = "", lastScore = 0;
+
+function buildShareText(){
+  return `[결단 뚝심 신의 — 경북 상식 대결]\n`
+       + `내 낙관: ${lastTitle} (12문제 중 ${lastScore}문제 정답)\n`
+       + `당신의 경북 내공은 몇 점? 도전해보세요!`;
+}
+
+async function shareResult(){
+  const text = buildShareText();
+  const url = location.href.split("#")[0];
+
+  // 모바일: 시스템 공유 시트 (카톡·Threads·문자 등)
+  if(navigator.share){
+    try{
+      await navigator.share({ title:"결단 뚝심 신의 — 경북 상식 대결", text, url });
+      return;
+    }catch(err){
+      if(err && err.name === "AbortError") return; // 사용자가 닫음
+    }
+  }
+
+  // PC 등 폴백: 문구+링크 클립보드 복사
+  const full = text + "\n" + url;
+  try{
+    await navigator.clipboard.writeText(full);
+    showToast("공유 문구가 복사됐습니다. 붙여넣기 하세요!");
+  }catch(e){
+    // 클립보드 API 불가 환경 최후 폴백
+    const ta = document.createElement("textarea");
+    ta.value = full;
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand("copy"); showToast("공유 문구가 복사됐습니다. 붙여넣기 하세요!"); }
+    catch(_){ showToast("복사에 실패했습니다. 주소창의 링크를 직접 공유해주세요."); }
+    document.body.removeChild(ta);
+  }
+}
+
+let toastTimer = null;
+function showToast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove("show"), 2600);
 }
 </script>
 </body>
