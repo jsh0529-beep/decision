@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>결단 뚝심 신의 — 경북 상식 대결</title>
+<style>
+  :root{
+    --ink:#161412;        /* 먹색 */
+    --paper:#F5F1E8;      /* 한지색 */
+    --paper-dim:#EAE4D6;
+    --seal:#B3261E;       /* 낙관 빨강 */
+    --gray:#8B8578;
+    --line:#2C2925;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",sans-serif;
+    display:flex;justify-content:center;
+    -webkit-font-smoothing:antialiased;
+  }
+  .stage{
+    width:100%;max-width:430px;min-height:100vh;
+    display:flex;flex-direction:column;
+    padding:20px 20px 110px;
+    position:relative;
+  }
+
+  /* ===== 세로쓰기 타이틀 (표지 오마주) ===== */
+  .cover{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;gap:28px;
+  }
+  .vertical-title{
+    display:flex;flex-direction:row-reverse;gap:26px;justify-content:center;
+    margin-bottom:6px;
+  }
+  .vcol{
+    writing-mode:vertical-rl;text-orientation:upright;
+    font-family:"Nanum Myeongjo","Batang","바탕",serif;
+    font-size:52px;font-weight:800;letter-spacing:14px;
+    color:var(--paper);
+  }
+  .cover .sub{
+    font-size:14px;letter-spacing:6px;color:var(--gray);
+  }
+  .cover .desc{
+    font-size:14.5px;line-height:1.8;color:#CFC9BC;max-width:300px;
+    word-break:keep-all;
+  }
+  .cover .shuffle-note{
+    font-size:12px;letter-spacing:2px;color:var(--gray);
+  }
+  .seal-mark{
+    width:46px;height:46px;border:2.5px solid var(--seal);color:var(--seal);
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Nanum Myeongjo",serif;font-size:22px;font-weight:800;
+    transform:rotate(-4deg);border-radius:4px;
+  }
+
+  /* ===== 버튼 ===== */
+  .btn{
+    appearance:none;border:none;cursor:pointer;
+    font-family:inherit;font-weight:700;
+    transition:transform .12s ease, background .15s ease, color .15s ease;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn:focus-visible{outline:3px solid var(--seal);outline-offset:3px;}
+  .btn-primary{
+    background:var(--paper);color:var(--ink);
+    font-size:17px;letter-spacing:3px;
+    padding:16px 46px;border-radius:2px;
+  }
+  .btn-ghost{
+    background:transparent;color:var(--gray);
+    font-size:13px;letter-spacing:2px;
+    padding:10px 18px;text-decoration:underline;text-underline-offset:4px;
+  }
+
+  /* ===== 진행 헤더 ===== */
+  .quiz-head{
+    display:flex;align-items:baseline;justify-content:space-between;
+    border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:8px;
+  }
+  .stage-name{
+    font-family:"Nanum Myeongjo",serif;font-size:26px;font-weight:800;letter-spacing:8px;
+  }
+  .stage-name small{font-size:12px;letter-spacing:2px;color:var(--seal);display:block;margin-bottom:4px;font-family:inherit;}
+  .q-count{font-size:13px;color:var(--gray);letter-spacing:1px;}
+  .progress{height:3px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:26px;}
+  .progress > div{height:100%;background:var(--seal);width:0%;transition:width .35s ease;}
+
+  /* ===== 문제 ===== */
+  .question{
+    font-size:19px;font-weight:700;line-height:1.65;
+    word-break:keep-all;margin-bottom:26px;min-height:64px;
+  }
+  .choices{display:flex;flex-direction:column;gap:11px;}
+  .choice{
+    background:transparent;border:1px solid var(--line);color:var(--paper);
+    text-align:left;font-size:15.5px;line-height:1.5;
+    padding:15px 16px;border-radius:2px;word-break:keep-all;
+    display:flex;gap:12px;align-items:flex-start;
+  }
+  .choice .mark{color:var(--gray);font-family:"Nanum Myeongjo",serif;font-weight:800;flex:none;}
+  .choice:not(:disabled):hover{border-color:var(--paper);}
+  .choice.correct{border-color:var(--seal);background:rgba(179,38,30,.12);}
+  .choice.wrong{opacity:.35;}
+  .choice.picked-wrong{border-color:var(--gray);background:rgba(139,133,120,.12);}
+
+  /* ===== 낙관 도장 (시그니처) ===== */
+  .stamp{
+    position:absolute;top:38%;left:50%;
+    width:110px;height:110px;
+    border:5px solid var(--seal);border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Nanum Myeongjo",serif;font-size:58px;font-weight:900;color:var(--seal);
+    background:rgba(22,20,18,.55);backdrop-filter:blur(1px);
+    pointer-events:none;opacity:0;
+    transform:translate(-50%,-50%) rotate(-8deg) scale(2.2);
+  }
+  .stamp.show{animation:stampIn .45s cubic-bezier(.2,1.4,.4,1) forwards;}
+  @keyframes stampIn{
+    0%{opacity:0;transform:translate(-50%,-50%) rotate(-8deg) scale(2.2);}
+    60%{opacity:1;transform:translate(-50%,-50%) rotate(-8deg) scale(.92);}
+    100%{opacity:1;transform:translate(-50%,-50%) rotate(-8deg) scale(1);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .stamp.show{animation:none;opacity:1;transform:translate(-50%,-50%) rotate(-8deg) scale(1);}
+    .progress > div{transition:none;}
+  }
+
+  /* ===== 해설 ===== */
+  .explain{
+    margin-top:20px;border-left:3px solid var(--seal);
+    padding:12px 14px;background:rgba(245,241,232,.05);
+    font-size:14px;line-height:1.75;color:#D8D2C4;word-break:keep-all;
+    display:none;
+  }
+  .explain.show{display:block;}
+  .explain b{color:var(--paper);}
+  .next-wrap{margin-top:22px;display:none;}
+  .next-wrap.show{display:block;}
+
+  /* ===== 결과 ===== */
+  .result{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;gap:18px;
+  }
+  .result .title-label{font-size:13px;letter-spacing:4px;color:var(--gray);}
+  .result .earned-title{
+    font-family:"Nanum Myeongjo",serif;font-size:40px;font-weight:900;letter-spacing:8px;
+    color:var(--paper);
+  }
+  .result .score{
+    font-size:15px;color:#CFC9BC;line-height:1.8;word-break:keep-all;max-width:300px;
+  }
+  .result .score b{color:var(--seal);font-size:20px;}
+  .medal{
+    width:84px;height:84px;border:3px solid var(--seal);border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Nanum Myeongjo",serif;font-size:40px;font-weight:900;color:var(--seal);
+    transform:rotate(-5deg);margin-bottom:4px;
+  }
+
+  /* ===== 구매 배너 ===== */
+  .buy-banner{
+    position:fixed;left:0;right:0;bottom:0;
+    display:flex;justify-content:center;
+    background:linear-gradient(to top, rgba(10,9,8,.97) 70%, rgba(10,9,8,0));
+    padding:14px 16px 18px;
+    z-index:50;
+  }
+  .buy-banner a{
+    width:100%;max-width:398px;
+    background:var(--seal);color:#FFF;text-decoration:none;
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:14px 18px;border-radius:3px;
+    font-weight:800;letter-spacing:.5px;
+    box-shadow:0 6px 22px rgba(179,38,30,.35);
+    transition:transform .12s ease;
+  }
+  .buy-banner a:active{transform:scale(.98);}
+  .buy-banner .bk-t{font-size:15px;}
+  .buy-banner .bk-s{display:block;font-size:11.5px;font-weight:500;opacity:.85;margin-top:3px;letter-spacing:1px;}
+  .buy-banner .arrow{font-size:20px;flex:none;}
+
+  .screen{display:none;flex:1;flex-direction:column;}
+  .screen.active{display:flex;}
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- 시작 화면 -->
+  <section class="screen active" id="scr-cover">
+    <div class="cover">
+      <div class="vertical-title" aria-label="결단 뚝심 신의">
+        <span class="vcol">결단</span>
+        <span class="vcol">뚝심</span>
+        <span class="vcol">신의</span>
+      </div>
+      <div class="seal-mark">任</div>
+      <p class="sub">경북 상식 대결 · 三단계</p>
+      <p class="desc">
+        《이철우가 걸어온 길》 속 이야기로 만든 문제 은행.
+        결단 → 뚝심 → 신의, 세 관문을 넘으면
+        당신의 칭호가 낙관으로 찍힙니다.
+      </p>
+      <p class="shuffle-note">매 판 열두 문제가 무작위로 뽑힙니다</p>
+      <button class="btn btn-primary" onclick="startGame()">시작</button>
+    </div>
+  </section>
+
+  <!-- 퀴즈 화면 -->
+  <section class="screen" id="scr-quiz">
+    <div class="quiz-head">
+      <div class="stage-name" id="stageName"><small>제1관문</small>결단</div>
+      <div class="q-count" id="qCount">1 / 12</div>
+    </div>
+    <div class="progress"><div id="progBar"></div></div>
+    <p class="question" id="qText"></p>
+    <div class="choices" id="choices"></div>
+    <div class="explain" id="explain"></div>
+    <div class="next-wrap" id="nextWrap">
+      <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">다음</button>
+    </div>
+    <div class="stamp" id="stamp" aria-hidden="true">正</div>
+  </section>
+
+  <!-- 결과 화면 -->
+  <section class="screen" id="scr-result">
+    <div class="result">
+      <div class="medal" id="medalChar">信</div>
+      <p class="title-label">당신에게 찍힌 낙관</p>
+      <p class="earned-title" id="earnedTitle">신의의 사람</p>
+      <p class="score" id="scoreText"></p>
+      <button class="btn btn-ghost" onclick="restart()">새 문제로 다시 풀기</button>
+    </div>
+  </section>
+
+</div>
+
+<!-- 구매 배너 (상시 노출) -->
+<div class="buy-banner">
+  <a href="https://smartstore.naver.com/wordleaf/products/13268630037?NaPm=ct%3Dmr8wkujc%7Cci%3D63d3ad45af52fb1861586beded64e7252bb12ec7%7Ctr%3Dboknx%7Csn%3D12508354%7Chk%3D2741e43037e78c0ab21192d89136c28371a0178f"
+     target="_blank" rel="noopener">
+    <span>
+      <span class="bk-t">《결단 뚝심 신의》 책 구매하기</span>
+      <span class="bk-s">이철우가 걸어온 길 · 네이버 스마트스토어</span>
+    </span>
+    <span class="arrow">→</span>
+  </a>
+</div>
+
+<script>
+// =====================================================
+// 문제 은행 (관문당 8문 × 3관문 = 24문)
+// 매 판: 관문별 4문 무작위 추출 + 문항 순서 셔플 + 보기 순서 셔플
+// =====================================================
+const STAGES = [
+  { key:"결단", label:"제1관문", char:"決" },
+  { key:"뚝심", label:"제2관문", char:"志" },
+  { key:"신의", label:"제3관문", char:"信" },
+];
+
+const PER_STAGE = 4; // 관문당 출제 수
+
+const BANK = [
+  // ───────── 1관문 결단: 경북 기초 상식 (8문)
+  { s:0, q:"현재 경상북도의 시·군은 모두 몇 개일까요?",
+    c:["20개","22개","24개","26개"], a:1,
+    e:"경북은 <b>10개 시 + 12개 군 = 22개 시·군</b>입니다. 2023년 7월 군위군이 대구광역시로 편입되면서 22개가 되었습니다." },
+  { s:0, q:"경상북도청이 있는 도시는 어디일까요?",
+    c:["포항시","경주시","안동시","구미시"], a:2,
+    e:"경북도청은 2016년 대구에서 <b>안동시 풍천면</b>(경북도청신도시)으로 이전했습니다." },
+  { s:0, q:"경북에서 인구가 가장 많은 도시는?",
+    c:["구미시","경산시","포항시","경주시"], a:2,
+    e:"경북 최대 도시는 <b>포항시</b>입니다. 철강 도시이자 경북 동해안 경제의 중심입니다." },
+  { s:0, q:"127년간 경북의 식구였다가 2023년 대구로 편입된 곳은?",
+    c:["칠곡군","군위군","성주군","고령군"], a:1,
+    e:"<b>군위군</b>은 대구경북통합신공항 추진 과정에서 2023년 7월 1일 대구광역시로 편입됐습니다." },
+  { s:0, q:"‘참외’ 하면 바로 떠오르는 경북의 고장은?",
+    c:["성주군","의성군","청도군","영양군"], a:0,
+    e:"<b>성주군</b>은 전국 참외 생산의 대부분을 차지하는 참외의 본고장입니다." },
+  { s:0, q:"겨울 별미 ‘대게’로 이름난 경북 동해안의 고장은?",
+    c:["울진군","영덕군","포항시","경주시"], a:1,
+    e:"<b>영덕군</b> 강구항은 대게의 대명사입니다. 이웃 울진 대게도 유명하지만, ‘영덕대게’가 가장 널리 알려져 있습니다." },
+  { s:0, q:"안동 하회마을과 경주 양동마을이 나란히 오른 목록은?",
+    c:["국가지질공원","유네스코 세계유산","람사르 습지","국립공원"], a:1,
+    e:"두 마을은 2010년 ‘한국의 역사마을’로 <b>유네스코 세계유산</b>에 함께 등재됐습니다." },
+  { s:0, q:"현재 경상북도 인구 규모에 가장 가까운 숫자는?",
+    c:["약 150만 명","약 250만 명","약 350만 명","약 450만 명"], a:1,
+    e:"경북 인구는 <b>약 250만 명</b> 수준입니다. 인구 감소와 지방소멸 대응이 도정의 최대 과제 중 하나입니다." },
+
+  // ───────── 2관문 뚝심: 도정 8년 (8문)
+  { s:1, q:"이철우 지사가 처음 경북도지사에 취임한 해는?",
+    c:["2014년","2016년","2018년","2020년"], a:2,
+    e:"<b>2018년 7월 1일</b> 민선 7기 도지사로 취임했고, 2022년 재선에 성공했습니다." },
+  { s:1, q:"2025년 경북 경주에서 열린 대형 국제행사는?",
+    c:["G20 정상회의","APEC 정상회의","세계박람회(엑스포)","아시안게임"], a:1,
+    e:"경주는 <b>2025 APEC 정상회의</b>를 개최했습니다. 경북이 유치부터 개최까지 이끈 대표 성과로 꼽힙니다." },
+  { s:1, q:"대구경북통합신공항이 들어서는 지역은?",
+    c:["군위·의성","포항·경주","김천·구미","영천·경산"], a:0,
+    e:"통합신공항은 <b>군위·의성</b> 일대에 건설됩니다. 이철우 도정의 최대 숙원 사업 중 하나입니다." },
+  { s:1, q:"우리 땅 독도를 행정구역상 관할하는 경북의 군은?",
+    c:["울진군","영덕군","울릉군","포항시"], a:2,
+    e:"독도의 주소는 경상북도 <b>울릉군</b> 울릉읍 독도리입니다. 경북은 독도의 고향입니다." },
+  { s:1, q:"이철우 도정이 인구 위기에 맞서 선포한 구호는?",
+    c:["‘저출생과의 전쟁’","‘수도권과의 경쟁’","‘고령화와의 동행’","‘청년과의 약속’"], a:0,
+    e:"경북도는 <b>‘저출생과의 전쟁’</b>을 선포하고 돌봄·주거·일자리 대책을 전방위로 쏟아냈습니다. 전국 지자체 저출생 대응의 신호탄이 된 정책입니다." },
+  { s:1, q:"이철우 지사가 대구시와 함께 추진해 온 초대형 프로젝트는?",
+    c:["대구경북 행정통합","경북 분도(分道)","도청 대구 환원","광역철도 민영화"], a:0,
+    e:"<b>대구경북 행정통합</b>은 이철우 지사가 2019년부터 앞장서 온 의제입니다. ‘지금의 지방자치는 껍데기’라는 문제의식에서 출발했습니다." },
+  { s:1, q:"포항이 국가첨단전략산업 특화단지로 지정된 분야는?",
+    c:["반도체","이차전지","디스플레이","바이오"], a:1,
+    e:"포항은 2023년 <b>이차전지</b> 특화단지로 지정됐습니다. 철강 도시에서 배터리 소재 도시로의 전환이 진행 중입니다." },
+  { s:1, q:"경북도청이 대구에서 안동으로 이전한 해는?",
+    c:["2008년","2012년","2016년","2020년"], a:2,
+    e:"<b>2016년 2월</b> 도청이 안동·예천 경계의 경북도청신도시로 옮겨오며 ‘도청 시대’가 열렸습니다." },
+
+  // ───────── 3관문 신의: 이철우가 걸어온 길 (8문)
+  { s:2, q:"이철우 지사가 정치 이전에 가졌던 첫 직업은?",
+    c:["경찰관","수학 교사","은행원","기자"], a:1,
+    e:"경북대 사범대 수학교육과를 나와 상주·의성에서 <b>수학 교사</b>로 교단에 섰습니다. 책에도 이 시절 이야기가 담겨 있습니다." },
+  { s:2, q:"이철우 지사가 국회의원을 지낸 지역구는?",
+    c:["안동","포항","김천","구미"], a:2,
+    e:"고향 <b>김천</b>에서 18·19·20대 국회의원을 지냈습니다." },
+  { s:2, q:"이철우 지사는 국회의원 몇 선을 지낸 뒤 도지사가 되었을까요?",
+    c:["재선","3선","4선","초선"], a:1,
+    e:"<b>3선</b>(18·19·20대) 의원을 지낸 뒤 2018년 도지사에 도전해 당선됐습니다." },
+  { s:2, q:"교사에서 도지사까지 — 이 책의 부제이기도 한 표현은?",
+    c:["이철우가 걸어온 길","경북이 가는 길","도전과 응전","다시 새마을"], a:0,
+    e:"책의 부제는 <b>‘이철우가 걸어온 길’</b>. 결단·뚝심·신의라는 세 단어로 그 길을 정리한 회고이자 기록입니다." },
+  { s:2, q:"교사를 그만둔 이철우가 이후 몸담았던 기관은?",
+    c:["감사원","국가정보원","외교부","한국은행"], a:1,
+    e:"1985년 안기부 공채에 합격해 <b>국가정보원</b>에서 국장까지 지냈습니다. 정보맨에서 정치인으로 이어지는 이력이 책의 한 축입니다." },
+  { s:2, q:"국회의원이 되기 전, 이철우가 경북도에서 지낸 직책은?",
+    c:["행정부지사","정무부지사","기획조정실장","대변인"], a:1,
+    e:"2005년부터 2008년까지 경북도 <b>정무부지사</b>를 지냈습니다. 도정과의 인연은 도지사가 되기 훨씬 전에 시작됐습니다." },
+  { s:2, q:"이철우 지사가 졸업한 대학과 전공은?",
+    c:["경북대 수학교육과","영남대 행정학과","안동대 사학과","경일대 경영학과"], a:0,
+    e:"<b>경북대학교 사범대학 수학교육과</b>를 졸업했습니다. 숫자에 밝은 도지사의 뿌리입니다." },
+  { s:2, q:"이철우 지사가 도청 집무·행사 때 즐겨 입어 화제가 된 옷은?",
+    c:["한복","교복","도포","작업복 점퍼"], a:0,
+    e:"이 지사는 <b>한복</b> 애호가로 유명합니다. 한복 차림으로 간부회의를 주재하고, 임용장은 직접 붓글씨로 써서 주는 것으로도 알려져 있습니다." },
+];
+
+const TITLES = [
+  { min:12, char:"信", title:"신의의 사람", msg:"열두 문제 전부 정답! 경북과 이 책의 세계를 꿰뚫고 계시네요. 이제 책으로 그 길의 속사정을 확인할 차례입니다." },
+  { min:9,  char:"志", title:"뚝심의 일꾼", msg:"흔들림 없는 실력입니다. 몇 문제만 더 채우면 만점 — 그 빈칸은 책 속에 있습니다." },
+  { min:5,  char:"決", title:"결단의 새내기", msg:"좋은 출발입니다. 오늘 틀린 문제의 답은 전부 책 안에 있습니다." },
+  { min:0,  char:"任", title:"경북 입문자", msg:"괜찮습니다. 모든 길에는 첫걸음이 있는 법 — 이 책이 좋은 입문서가 되어줄 겁니다." },
+];
+
+// ===== 셔플 유틸 (Fisher–Yates) =====
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ===== 이번 판 문제 구성 =====
+// 관문 순서(결단→뚝심→신의)는 유지, 관문 안에서 무작위 추출+셔플
+function buildRound(){
+  const round = [];
+  for(let s = 0; s < STAGES.length; s++){
+    const pool = BANK.filter(q => q.s === s);
+    const picked = shuffle(pool).slice(0, PER_STAGE);
+    picked.forEach(q => {
+      // 보기 셔플: 정답 텍스트 기준으로 재계산
+      const answerText = q.c[q.a];
+      const mixed = shuffle(q.c);
+      round.push({
+        s: q.s, q: q.q, e: q.e,
+        c: mixed,
+        a: mixed.indexOf(answerText),
+      });
+    });
+  }
+  return round;
+}
+
+let ROUND = [];
+let idx = 0, score = 0, locked = false;
+
+function $(id){ return document.getElementById(id); }
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  $(id).classList.add("active");
+}
+
+function startGame(){
+  ROUND = buildRound();
+  idx = 0; score = 0;
+  show("scr-quiz");
+  renderQuestion();
+}
+
+function renderQuestion(){
+  locked = false;
+  const q = ROUND[idx];
+  const st = STAGES[q.s];
+  $("stageName").innerHTML = `<small>${st.label}</small>${st.key}`;
+  $("qCount").textContent = `${idx+1} / ${ROUND.length}`;
+  $("progBar").style.width = `${(idx / ROUND.length) * 100}%`;
+  $("qText").textContent = q.q;
+
+  const marks = ["一","二","三","四"];
+  const box = $("choices");
+  box.innerHTML = "";
+  q.c.forEach((text,i)=>{
+    const b = document.createElement("button");
+    b.className = "btn choice";
+    b.innerHTML = `<span class="mark">${marks[i]}</span><span>${text}</span>`;
+    b.onclick = ()=>pick(i,b);
+    box.appendChild(b);
+  });
+
+  $("explain").classList.remove("show");
+  $("explain").innerHTML = "";
+  $("nextWrap").classList.remove("show");
+  $("stamp").classList.remove("show");
+}
+
+function pick(i, btn){
+  if(locked) return;
+  locked = true;
+  const q = ROUND[idx];
+  const buttons = [...$("choices").children];
+  buttons.forEach(b=>b.disabled = true);
+
+  const correct = (i === q.a);
+  if(correct) score++;
+
+  buttons.forEach((b,bi)=>{
+    if(bi === q.a) b.classList.add("correct");
+    else if(bi === i) b.classList.add("picked-wrong");
+    else b.classList.add("wrong");
+  });
+
+  const stamp = $("stamp");
+  stamp.textContent = correct ? "正" : "誤";
+  stamp.style.color = correct ? "var(--seal)" : "var(--gray)";
+  stamp.style.borderColor = correct ? "var(--seal)" : "var(--gray)";
+  void stamp.offsetWidth; // 애니메이션 재시작
+  stamp.classList.add("show");
+
+  const ex = $("explain");
+  ex.innerHTML = (correct ? "<b>정답!</b> " : "<b>아쉽네요.</b> ") + q.e;
+  ex.classList.add("show");
+
+  $("nextBtn").textContent = (idx === ROUND.length - 1) ? "결과 보기" : "다음";
+  $("nextWrap").classList.add("show");
+}
+
+function nextQuestion(){
+  if(idx === ROUND.length - 1){
+    finish();
+    return;
+  }
+  idx++;
+  renderQuestion();
+}
+
+function finish(){
+  $("progBar").style.width = "100%";
+  const t = TITLES.find(t=>score >= t.min);
+  $("medalChar").textContent = t.char;
+  $("earnedTitle").textContent = t.title;
+  $("scoreText").innerHTML = `${ROUND.length}문제 중 <b>${score}문제</b> 정답<br>${t.msg}`;
+  show("scr-result");
+}
+
+function restart(){
+  show("scr-cover");
+}
+</script>
+</body>
+</html>
